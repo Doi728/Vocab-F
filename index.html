@@ -288,7 +288,7 @@
         </div>
         <h3 style="margin:5px 0">${v.word}</h3>
         <span class="ipa-text" style="margin-bottom:10px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
-        <p id="rev_${v.word.replace(/\s/g,'')}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px;">แปล: ${v.def}</p>
+        <p id="rev_${v.word.replace(/\s/g,'')}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px;">${v.def}</p>
         <div style="display:flex; gap:5px; margin-top:15px">
           <button onclick="document.getElementById('rev_${v.word.replace(/\s/g,'')}').style.display='block'" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
           <button onclick="markReview('${v.word}', true)" style="background:#68A67D; flex:1">จำได้</button>
