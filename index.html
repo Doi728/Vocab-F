@@ -385,7 +385,7 @@
       const choices = [...pool].sort(()=>0.5-Math.random()).slice(0, 4);
       if(!choices.includes(q)) choices[0] = q;
       choices.sort(()=>0.5-Math.random());
-      area.innerHTML = `<h4>"${q.word}" (${q.type}) แปลว่า?</h4>` + choices.map(c => `<button style="width:100%" onclick="checkAnswer('${c.def}','${q.def}','choice')">${c.def}</button>`).join('');
+      area.innerHTML = `<h4>"${q.word}" (${q.type})</h4>` + choices.map(c => `<button style="width:100%" onclick="checkAnswer('${c.def}','${q.def}','choice')">${c.def}</button>`).join('');
     } else if(type === 'write') {
       const q = pool[Math.floor(Math.random()*pool.length)];
       area.innerHTML = `<h4>จงเขียนศัพท์ของ: ${q.def}</h4><input type="text" id="ansInp"><button onclick="checkWrite('${q.word.toLowerCase()}')">ส่ง</button>`;
