@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,12 +135,11 @@
 
   async function initMasterDB() {
     const status = document.getElementById('db-status');
-    try {
-      const [res1, res2] = await Promise.all([
-        fetch('data.json').catch(() => null),
-        fetch('data2.json').catch(() => null)
-      ]);
+    let loadedCount = 0;
 
+    // 1. โหลด data.json
+    try {
+      const res1 = await fetch('data.json');
       if (res1 && res1.ok) {
         const d1 = await res1.json();
         d1.forEach(item => {
@@ -153,20 +153,24 @@
               examples: item.value.examples || [], 
               definition: '' 
             };
+            loadedCount++;
           }
         });
       }
+    } catch (e) { console.warn("data.json skip:", e); }
 
+    // 2. โหลด data2.json
+    try {
+      const res2 = await fetch('data2.json');
       if (res2 && res2.ok) {
         const d2 = await res2.json();
+        // ใช้ Object.values เพื่อรองรับ data2.json ที่เป็นรูปแบบ Object { "0": {...}, "1": {...} }
         Object.values(d2).forEach(item => {
           if(item.word) {
             const key = item.word.toLowerCase().trim();
-            // ถ้ามีใน d1 แล้ว ให้เติมนิยาม
             if (masterDB[key]) {
               masterDB[key].definition = item.definition || '';
             } else {
-              // ถ้าไม่มีใน d1 เลย ให้สร้างใหม่จาก d2
               masterDB[key] = { 
                 level: (item.cefr||'').toUpperCase(), 
                 type: item.type||'', 
@@ -175,17 +179,19 @@
                 examples: item.example ? [item.example] : [], 
                 definition: item.definition || '' 
               };
+              loadedCount++;
             }
           }
         });
       }
+    } catch (e) { console.warn("data2.json skip:", e); }
 
-      status.innerText = `DB: Ready (${Object.keys(masterDB).length})`;
+    if (loadedCount > 0) {
+      status.innerText = `DB: Ready (${loadedCount})`;
       status.style.color = "#2ecc71";
-    } catch (e) {
+    } else {
       status.innerText = "DB: Error";
       status.style.color = "#e74c3c";
-      console.error("Fetch error:", e);
     }
   }
 
@@ -210,7 +216,7 @@
       else { word = line.trim(); }
 
       if(word) {
-        const info = masterDB[word.toLowerCase()] || {};
+        const info = masterDB[word.toLowerCase().trim()] || {};
         const finalDef = def || info.definition || "No definition found";
 
         vocabData.push({ 
