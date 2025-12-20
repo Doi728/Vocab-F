@@ -132,7 +132,6 @@
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
 
-  // --- แก้ไข: ปรับการโหลด data2 ให้รองรับรูปแบบ Object Key เป็นตัวเลข และดึงเฉพาะ definition ---
   async function initMasterDB() {
     const status = document.getElementById('db-status');
     try {
@@ -147,7 +146,7 @@
           if(item.value && item.value.word) {
             const key = item.value.word.toLowerCase().trim();
             masterDB[key] = {
-              level: item.value.level || '',
+              level: (item.value.level || '').toUpperCase(),
               type: item.value.type || '',
               ipa: item.value.phonetics?.us || '',
               audio: item.value.us?.mp3 || '',
@@ -160,22 +159,23 @@
 
       if (res2 && res2.ok) {
         const d2 = await res2.json();
-        // ใช้ Object.values เพื่อจัดการข้อมูลที่มี Key เป็น "0", "1", "2"...
         Object.values(d2).forEach(item => {
           if(item.word) {
             const key = item.word.toLowerCase().trim();
-            if (!masterDB[key]) {
+            // ถ้ามีใน d1 แล้ว ให้เติมนิยาม
+            if (masterDB[key]) {
+              masterDB[key].definition = item.definition || '';
+            } else {
+              // ถ้าไม่มีใน d1 เลย ให้สร้างใหม่จาก d2
               masterDB[key] = { 
                 level: (item.cefr||'').toUpperCase(), 
                 type: item.type||'', 
                 ipa: item.phon_n_am||'', 
                 audio: '', 
-                examples: [], 
-                definition: '' 
+                examples: item.example ? [item.example] : [], 
+                definition: item.definition || '' 
               };
             }
-            // ดึงเฉพาะ definition ตามโจทย์
-            masterDB[key].definition = item.definition || '';
           }
         });
       }
@@ -185,6 +185,7 @@
     } catch (e) {
       status.innerText = "DB: Error";
       status.style.color = "#e74c3c";
+      console.error("Fetch error:", e);
     }
   }
 
