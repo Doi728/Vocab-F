@@ -132,16 +132,15 @@
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
 
+  // --- ปรับปรุงสมบูรณ์: โหลดข้อมูลจาก data2.json ที่เป็นรูปแบบ Object ---
   async function initMasterDB() {
     const status = document.getElementById('db-status');
     try {
-      const [res1, res2, res3] = await Promise.all([
+      const [res1, res2] = await Promise.all([
         fetch('data.json').catch(() => null),
-        fetch('data2.json').catch(() => null),
-        fetch('data3.json').catch(() => null)
+        fetch('data2.json').catch(() => null)
       ]);
 
-      // 1. Examples from data.json
       if (res1 && res1.ok) {
         const d1 = await res1.json();
         d1.forEach(item => {
@@ -152,52 +151,32 @@
               type: item.value.type || '',
               ipa: item.value.phonetics?.us || '',
               audio: item.value.us?.mp3 || '',
-              examples: item.value.examples || [],
+              examples: item.value.examples || [], 
               definition: '' 
             };
           }
         });
       }
 
-      // 2. Definition Priority 1 from data2.json
       if (res2 && res2.ok) {
         const d2 = await res2.json();
+        // ใช้ Object.values เพื่อจัดการโครงสร้างแบบ { "0": {...}, "1": {...} }
         Object.values(d2).forEach(item => {
           if(item.word) {
             const key = item.word.toLowerCase().trim();
-            if (!masterDB[key]) {
-              masterDB[key] = { level: (item.cefr||'').toUpperCase(), type: item.type||'', ipa: item.phon_n_am||'', audio: '', examples: [], definition: '' };
-            }
-            masterDB[key].definition = item.definition || '';
-          }
-        });
-      }
-
-      // 3. Definition Priority 2 from data3.json (รองรับ Object structure)
-      if (res3 && res3.ok) {
-        const d3 = await res3.json();
-        // แปลง Object "0":{}, "1":{} เป็น Array เพื่อใช้งานง่ายขึ้น
-        const d3Items = Object.values(d3); 
-        d3Items.forEach(item => {
-          if(item.word) {
-            const key = item.word.toLowerCase().trim();
+            // หากไม่มีคำนี้จาก data.json ให้สร้างฐานข้อมูลไว้
             if (!masterDB[key]) {
               masterDB[key] = { 
                 level: (item.cefr||'').toUpperCase(), 
                 type: item.type||'', 
                 ipa: item.phon_n_am||'', 
-                audio: item.us || '', 
+                audio: '', 
                 examples: item.example ? [item.example] : [], 
-                definition: item.definition || '' 
+                definition: '' 
               };
-            } else if (!masterDB[key].definition) {
-              // ถ้ามีคำนี้ในระบบแล้วแต่ยังขาดนิยาม ให้ดึงจาก data3
-              masterDB[key].definition = item.definition || '';
-              // ถ้ายังไม่มีตัวอย่าง ให้ลองเอาจาก data3 มาใส่ด้วย
-              if(masterDB[key].examples.length === 0 && item.example) {
-                masterDB[key].examples = [item.example];
-              }
             }
+            // ดึงข้อมูลนิยามจาก data2 มาเก็บไว้ (ตามโจทย์)
+            masterDB[key].definition = item.definition || '';
           }
         });
       }
@@ -205,7 +184,6 @@
       status.innerText = `DB: Ready (${Object.keys(masterDB).length})`;
       status.style.color = "#2ecc71";
     } catch (e) {
-      console.error("MasterDB Error:", e);
       status.innerText = "DB: Error";
       status.style.color = "#e74c3c";
     }
@@ -299,14 +277,14 @@
       <h3 style="margin:5px 0">${v.word}</h3>
       <span class="ipa-text" style="margin-bottom:10px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
       <p id="rev_ans_${i}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px; margin-bottom:5px;">${v.def}</p>
-      <div id="rev_extra_btns_${i}" style="display:none;">
+      <div id="rev_extra_${i}" style="display:none;">
         ${v.fullDef ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_def')">📖 นิยาม</button>` : ''}
         ${v.fullEx ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_ex')">Ex. ประโยค</button>` : ''}
         <div id="${uniqueId}_def" class="extra-info"><b>English Definition:</b><br>${v.fullDef}</div>
         <div id="${uniqueId}_ex" class="extra-info"><b>Examples:</b><br>• ${v.fullEx}</div>
       </div>
       <div style="display:flex; gap:5px; margin-top:15px">
-        <button onclick="document.getElementById('rev_ans_${i}').style.display='block'; document.getElementById('rev_extra_btns_${i}').style.display='block';" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
+        <button onclick="document.getElementById('rev_ans_${i}').style.display='block'; document.getElementById('rev_extra_${i}').style.display='block';" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
         <button onclick="markReview('${v.word}', true)" style="background:#68A67D; flex:1">จำได้</button>
         <button onclick="markReview('${v.word}', false)" style="background:#E57373; flex:1">ลืม</button>
       </div>`;
@@ -365,7 +343,6 @@
 
   function markReview(word, success) {
     const idx = vocabData.findIndex(v => v.word === word);
-    if(idx === -1) return;
     if(success) vocabData[idx].step = Math.min(vocabData[idx].step + 1, intervals.length - 1);
     else vocabData[idx].step = 0;
     vocabData[idx].nextReview = Date.now() + (intervals[vocabData[idx].step] * 1000);
@@ -423,7 +400,20 @@
     };
     reader.readAsText(file);
   }
- <!DOCTYPE html>
+
+  const rainContainer = document.getElementById('rain-container');
+  for(let i=0; i<15; i++) {
+    const drop = document.createElement('div'); drop.className = 'rain-drop'; drop.style.left = Math.random() * 100 + '%';
+    drop.style.animationDuration = (Math.random() * 1 + 1) + 's'; rainContainer.appendChild(drop);
+  }
+
+  initMasterDB();
+  updateDropdowns();
+  showPage('add');
+</script>
+</body>
+</html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -557,16 +547,15 @@
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
 
+  // --- ปรับปรุงสมบูรณ์: โหลดข้อมูลจาก data2.json ที่เป็นรูปแบบ Object ---
   async function initMasterDB() {
     const status = document.getElementById('db-status');
     try {
-      const [res1, res2, res3] = await Promise.all([
+      const [res1, res2] = await Promise.all([
         fetch('data.json').catch(() => null),
-        fetch('data2.json').catch(() => null),
-        fetch('data3.json').catch(() => null)
+        fetch('data2.json').catch(() => null)
       ]);
 
-      // 1. Examples from data.json
       if (res1 && res1.ok) {
         const d1 = await res1.json();
         d1.forEach(item => {
@@ -577,52 +566,32 @@
               type: item.value.type || '',
               ipa: item.value.phonetics?.us || '',
               audio: item.value.us?.mp3 || '',
-              examples: item.value.examples || [],
+              examples: item.value.examples || [], 
               definition: '' 
             };
           }
         });
       }
 
-      // 2. Definition Priority 1 from data2.json
       if (res2 && res2.ok) {
         const d2 = await res2.json();
+        // ใช้ Object.values เพื่อจัดการโครงสร้างแบบ { "0": {...}, "1": {...} }
         Object.values(d2).forEach(item => {
           if(item.word) {
             const key = item.word.toLowerCase().trim();
-            if (!masterDB[key]) {
-              masterDB[key] = { level: (item.cefr||'').toUpperCase(), type: item.type||'', ipa: item.phon_n_am||'', audio: '', examples: [], definition: '' };
-            }
-            masterDB[key].definition = item.definition || '';
-          }
-        });
-      }
-
-      // 3. Definition Priority 2 from data3.json (รองรับ Object structure)
-      if (res3 && res3.ok) {
-        const d3 = await res3.json();
-        // แปลง Object "0":{}, "1":{} เป็น Array เพื่อใช้งานง่ายขึ้น
-        const d3Items = Object.values(d3); 
-        d3Items.forEach(item => {
-          if(item.word) {
-            const key = item.word.toLowerCase().trim();
+            // หากไม่มีคำนี้จาก data.json ให้สร้างฐานข้อมูลไว้
             if (!masterDB[key]) {
               masterDB[key] = { 
                 level: (item.cefr||'').toUpperCase(), 
                 type: item.type||'', 
                 ipa: item.phon_n_am||'', 
-                audio: item.us || '', 
+                audio: '', 
                 examples: item.example ? [item.example] : [], 
-                definition: item.definition || '' 
+                definition: '' 
               };
-            } else if (!masterDB[key].definition) {
-              // ถ้ามีคำนี้ในระบบแล้วแต่ยังขาดนิยาม ให้ดึงจาก data3
-              masterDB[key].definition = item.definition || '';
-              // ถ้ายังไม่มีตัวอย่าง ให้ลองเอาจาก data3 มาใส่ด้วย
-              if(masterDB[key].examples.length === 0 && item.example) {
-                masterDB[key].examples = [item.example];
-              }
             }
+            // ดึงข้อมูลนิยามจาก data2 มาเก็บไว้ (ตามโจทย์)
+            masterDB[key].definition = item.definition || '';
           }
         });
       }
@@ -630,7 +599,6 @@
       status.innerText = `DB: Ready (${Object.keys(masterDB).length})`;
       status.style.color = "#2ecc71";
     } catch (e) {
-      console.error("MasterDB Error:", e);
       status.innerText = "DB: Error";
       status.style.color = "#e74c3c";
     }
@@ -724,14 +692,14 @@
       <h3 style="margin:5px 0">${v.word}</h3>
       <span class="ipa-text" style="margin-bottom:10px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
       <p id="rev_ans_${i}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px; margin-bottom:5px;">${v.def}</p>
-      <div id="rev_extra_btns_${i}" style="display:none;">
+      <div id="rev_extra_${i}" style="display:none;">
         ${v.fullDef ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_def')">📖 นิยาม</button>` : ''}
         ${v.fullEx ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_ex')">Ex. ประโยค</button>` : ''}
         <div id="${uniqueId}_def" class="extra-info"><b>English Definition:</b><br>${v.fullDef}</div>
         <div id="${uniqueId}_ex" class="extra-info"><b>Examples:</b><br>• ${v.fullEx}</div>
       </div>
       <div style="display:flex; gap:5px; margin-top:15px">
-        <button onclick="document.getElementById('rev_ans_${i}').style.display='block'; document.getElementById('rev_extra_btns_${i}').style.display='block';" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
+        <button onclick="document.getElementById('rev_ans_${i}').style.display='block'; document.getElementById('rev_extra_${i}').style.display='block';" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
         <button onclick="markReview('${v.word}', true)" style="background:#68A67D; flex:1">จำได้</button>
         <button onclick="markReview('${v.word}', false)" style="background:#E57373; flex:1">ลืม</button>
       </div>`;
@@ -790,7 +758,6 @@
 
   function markReview(word, success) {
     const idx = vocabData.findIndex(v => v.word === word);
-    if(idx === -1) return;
     if(success) vocabData[idx].step = Math.min(vocabData[idx].step + 1, intervals.length - 1);
     else vocabData[idx].step = 0;
     vocabData[idx].nextReview = Date.now() + (intervals[vocabData[idx].step] * 1000);
@@ -849,18 +816,6 @@
     reader.readAsText(file);
   }
 
-  const rainContainer = document.getElementById('rain-container');
-  for(let i=0; i<15; i++) {
-    const drop = document.createElement('div'); drop.className = 'rain-drop'; drop.style.left = Math.random() * 100 + '%';
-    drop.style.animationDuration = (Math.random() * 1 + 1) + 's'; rainContainer.appendChild(drop);
-  }
-
-  initMasterDB();
-  updateDropdowns();
-  showPage('add');
-</script>
-</body>
-</html>
   const rainContainer = document.getElementById('rain-container');
   for(let i=0; i<15; i++) {
     const drop = document.createElement('div'); drop.className = 'rain-drop'; drop.style.left = Math.random() * 100 + '%';
