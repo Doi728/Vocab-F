@@ -37,20 +37,21 @@
     button { padding: 10px 20px; background: var(--button); color: white; border: none; border-radius: 6px; cursor: pointer; margin: 5px 2px; transition: 0.2s; font-size: 15px; }
     button:hover { background: var(--button-hover); transform: translateY(-1px); }
 
-    /* Badge & Text Styles */
     .cefr-badge { background: #E9D5DA; color: #827397; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px; border: 1px solid #d1b8bf; }
     .type-tag { font-size: 11px; color: #7f8c8d; font-style: italic; background: #eee; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
     .ipa-text { color: #6A8EAB; font-size: 13px; font-family: sans-serif; font-style: italic; display: block; margin-top: 2px; }
     .audio-btn { cursor: pointer; font-size: 14px; margin-left: 5px; color: #587C9E; transition: 0.2s; }
 
-    /* Accordion & Cards */
     .folder-collapse { margin-bottom: 10px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px var(--card-shadow); }
     .folder-header { background: var(--header-start-color); color: white; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
     .folder-content { background: white; padding: 10px; display: none; }
     .folder-content.active { display: block; }
     .card { background: #fdfdfd; padding: 15px; margin: 8px 0; border-left: 5px solid var(--button); border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     
-    /* Quiz & Flashcard UI */
+    .extra-info { display: none; background: #f0f5f8; border-left: 3px solid var(--button); padding: 10px; margin-top: 10px; font-size: 14px; border-radius: 4px; animation: fadeIn 0.3s; color: #444; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .btn-extra { padding: 4px 10px; font-size: 12px; background: #CBD9E1; color: #3A4750; margin-right: 5px; margin-top: 8px; font-weight: 500; }
+
     .quiz-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
     .match-item { background: white; border: 1px solid var(--border-color); padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; }
@@ -99,9 +100,10 @@
   <div class="folder-box">
     <label>บันทึกลงโฟลเดอร์ :</label>
     <select id="addFolderSelect"></select>
-    <textarea id="vocabInput" rows="6" placeholder="รูปแบบ :
-คำศัพท์. คำแปล (จุด+เว้นวรรค)
-คำศัพท์  คำแปล (เว้นวรรค 2 ครั้ง)"></textarea>
+    <textarea id="vocabInput" rows="6" placeholder="รูปแบบการป้อน :
+คำศัพท์ (หากไม่ป้อนคำแปลจะขึ้นนิยามภาษาอังกฤษ)
+คำศัพท์. คำแปล
+คำศัพท์  คำแปล"></textarea>
     <button onclick="processAddVocab()">💾 บันทึกข้อมูล</button>
   </div>
 
@@ -116,73 +118,63 @@
   </div>
 </section>
 
-<section id="review">
-  <h2>🔁 ถึงเวลาทบทวน</h2>
-  <div id="reviewContainer"></div>
-</section>
-
-<section id="list">
-  <h2>📚 คลังคำศัพท์</h2>
-  <input type="text" id="searchBox" placeholder="🔍 ค้นหาศัพท์..." oninput="renderVocabList()">
-  <div id="accordionList"></div>
-</section>
-
-<section id="quiz">
-  <h2>📝 แบบฝึกหัด</h2>
-  <div class="folder-box">
-    <label>โฟลเดอร์ทดสอบ :</label>
-    <select id="quizFilter" onchange="startQuiz('choice')"></select>
-  </div>
-  <div style="display:flex; justify-content:center; gap:5px; margin-bottom:15px; flex-wrap:wrap;">
-    <button onclick="startQuiz('choice')">เลือกตอบ</button>
-    <button onclick="startQuiz('write')">เขียนตอบ</button>
-    <button onclick="startQuiz('tf')">จริง/เท็จ</button>
-    <button onclick="startQuiz('match')">จับคู่</button>
-  </div>
-  <div id="quizArea" class="quiz-card"></div>
-</section>
-
-<section id="flashcard">
-  <h2 style="display:flex; justify-content:space-between; align-items:center;">
-    <span>🗂️ แฟลชการ์ด</span>
-    <select id="flashFilter" onchange="renderFlash()" style="width:auto; margin:0; font-size:14px;"></select>
-  </h2>
-  <div id="flashArea" style="min-height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center;"></div>
-</section>
+<section id="review"><h2>🔁 ถึงเวลาทบทวน</h2><div id="reviewContainer"></div></section>
+<section id="list"><h2>📚 คลังคำศัพท์</h2><input type="text" id="searchBox" placeholder="🔍 ค้นหาศัพท์..." oninput="renderVocabList()"><div id="accordionList"></div></section>
+<section id="quiz"><h2>📝 แบบฝึกหัด</h2><div class="folder-box"><label>โฟลเดอร์ทดสอบ :</label><select id="quizFilter" onchange="startQuiz('choice')"></select></div><div style="display:flex; justify-content:center; gap:5px; margin-bottom:15px; flex-wrap:wrap;"><button onclick="startQuiz('choice')">เลือกตอบ</button><button onclick="startQuiz('write')">เขียนตอบ</button><button onclick="startQuiz('tf')">จริง/เท็จ</button><button onclick="startQuiz('match')">จับคู่</button></div><div id="quizArea" class="quiz-card"></div></section>
+<section id="flashcard"><h2 style="display:flex; justify-content:space-between; align-items:center;"><span>🗂️ แฟลชการ์ด</span><select id="flashFilter" onchange="renderFlash()" style="width:auto; margin:0; font-size:14px;"></select></h2><div id="flashArea" style="min-height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center;"></div></section>
 
 <script>
-  // --- Data & Config ---
   const STORAGE_KEY = 'v_rep_full_v7'; 
   const FOLDER_KEY = 'v_fld_full_v7';
-  const MASTER_URL = 'data.json'; 
   const intervals = [1800, 3600, 43200, 86400, 259200, 604800, 1209600, 2592000];
 
   let vocabData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
 
-  // --- 1. Load Master Data ---
+  // --- ปรับปรุง: โหลดข้อมูลและเก็บทั้ง Definition และ Examples ---
   async function initMasterDB() {
     const status = document.getElementById('db-status');
     try {
-      const response = await fetch(MASTER_URL);
-      if(!response.ok) throw new Error("Offline");
-      const data = await response.json();
-      data.forEach(item => {
-        if(item.value && item.value.word) {
-          const key = item.value.word.toLowerCase().trim();
-          masterDB[key] = {
-            level: item.value.level || '',
-            type: item.value.type || '', // ดึงหน้าที่ของคำ
-            ipa: item.value.phonetics?.us || '',
-            audio: item.value.us?.mp3 || ''
-          };
-        }
-      });
+      const [res1, res2] = await Promise.all([
+        fetch('data.json').catch(() => null),
+        fetch('data2.json').catch(() => null)
+      ]);
+
+      if (res1 && res1.ok) {
+        const d1 = await res1.json();
+        d1.forEach(item => {
+          if(item.value && item.value.word) {
+            const key = item.value.word.toLowerCase().trim();
+            masterDB[key] = {
+              level: item.value.level || '',
+              type: item.value.type || '',
+              ipa: item.value.phonetics?.us || '',
+              audio: item.value.us?.mp3 || '',
+              examples: item.value.examples || [], // เก็บประโยคตัวอย่าง
+              definition: '' 
+            };
+          }
+        });
+      }
+
+      if (res2 && res2.ok) {
+        const d2 = await res2.json();
+        Object.values(d2).forEach(item => {
+          if(item.word) {
+            const key = item.word.toLowerCase().trim();
+            if (!masterDB[key]) {
+              masterDB[key] = { level: (item.cefr||'').toUpperCase(), type: item.type||'', ipa: item.phon_n_am||'', audio: '', examples: [], definition: '' };
+            }
+            masterDB[key].definition = item.definition || '';
+          }
+        });
+      }
+
       status.innerText = `DB: Ready (${Object.keys(masterDB).length})`;
       status.style.color = "#2ecc71";
     } catch (e) {
-      status.innerText = "DB: Offline";
+      status.innerText = "DB: Error";
       status.style.color = "#e74c3c";
     }
   }
@@ -195,7 +187,7 @@
 
   function playAudio(url) { if(url) new Audio(url).play(); }
 
-  // --- Vocabulary Add ---
+  // --- ปรับปรุง: เก็บข้อมูลเสริมลงใน vocabData ---
   function processAddVocab() {
     const input = document.getElementById('vocabInput').value.trim();
     const folder = document.getElementById('addFolderSelect').value;
@@ -203,19 +195,21 @@
     const lines = input.split('\n');
     let count = 0;
     lines.forEach(line => {
-      let parts = line.split('. '); 
-      if(parts.length < 2) parts = line.split(/ {2,}/); 
-      if(parts.length >= 2) {
-        const word = parts[0].trim();
-        const def = parts[1].trim();
+      let word = "", def = "";
+      if(line.includes('. ')) { const p = line.split('. '); word = p[0].trim(); def = p[1].trim(); }
+      else if(line.match(/ {2,}/)) { const p = line.split(/ {2,}/); word = p[0].trim(); def = p[1].trim(); }
+      else { word = line.trim(); }
+
+      if(word) {
         const info = masterDB[word.toLowerCase()] || {};
+        const finalDef = def || info.definition || "No definition found";
 
         vocabData.push({ 
-          word: word, def: def, folder: folder, 
-          type: info.type || '', // บันทึก Word Type
-          level: info.level || '',
-          ipa: info.ipa || '',
-          audio: info.audio || '',
+          word: word, def: finalDef, folder: folder, 
+          type: info.type || '', level: info.level || '', ipa: info.ipa || '', audio: info.audio || '',
+          // บันทึกข้อมูลเสริมเพื่อปุ่มกด
+          fullDef: info.definition || '',
+          fullEx: info.examples ? info.examples.join('<br>• ') : '',
           step: 0, nextReview: Date.now() + 1000 
         });
         count++;
@@ -226,14 +220,16 @@
     alert(`เพิ่มสำเร็จ ${count} คำ!`);
   }
 
-  // --- Render Vocab List ---
+  function toggleExtra(id) {
+    const el = document.getElementById(id);
+    el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+  }
+
   function renderVocabList() {
     const query = document.getElementById('searchBox').value.toLowerCase();
     const container = document.getElementById('accordionList');
     container.innerHTML = '';
     renderFolderAccordion("ทั้งหมด", vocabData.filter(v => v.word.toLowerCase().includes(query)));
-    const noFolder = vocabData.filter(v => v.folder === '' && v.word.toLowerCase().includes(query));
-    if(noFolder.length > 0) renderFolderAccordion("ไม่มีโฟลเดอร์", noFolder);
     folderList.forEach(f => {
       const items = vocabData.filter(v => v.folder === f && v.word.toLowerCase().includes(query));
       if(items.length > 0) renderFolderAccordion(f, items);
@@ -243,86 +239,60 @@
   function renderFolderAccordion(title, items) {
     const div = document.createElement('div');
     div.className = 'folder-collapse';
-    div.innerHTML = `
-      <div class="folder-header" onclick="this.nextElementSibling.classList.toggle('active')">
-        <span>📁 ${title} (${items.length})</span><span>▼</span>
-      </div>
-      <div class="folder-content">
-        ${items.map(v => `
-          <div class="card">
-            <div style="flex:1">
-              <div>
-                <b>${v.word}</b> 
-                ${v.type ? `<span class="type-tag">${v.type}</span>` : ''} 
-                ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}
-              </div>
-              <span class="ipa-text">
-                ${v.ipa || ''} 
-                ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}
-              </span>
-              <small style="color:#555">${v.def}</small>
-            </div>
-            <button onclick="deleteVocab('${v.word}')" style="background:none; color:red; font-size:12px;">ลบ</button>
+    div.innerHTML = `<div class="folder-header" onclick="this.nextElementSibling.classList.toggle('active')"><span>📁 ${title} (${items.length})</span><span>▼</span></div><div class="folder-content">
+      ${items.map((v, i) => {
+        const uniqueId = `list_${title.replace(/\s/g,'')}_${i}`;
+        return `<div class="card" style="display:block;"><div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1">
+          <div><b>${v.word}</b> ${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div>
+          <span class="ipa-text">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
+          <div style="margin:5px 0; color:#555;">${v.def}</div>
+          <div>
+            ${v.fullDef ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_def')">📖 นิยาม</button>` : ''}
+            ${v.fullEx ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_ex')">Ex. ประโยค</button>` : ''}
           </div>
-        `).join('')}
-      </div>
-    `;
+          <div id="${uniqueId}_def" class="extra-info"><b>English Definition:</b><br>${v.fullDef}</div>
+          <div id="${uniqueId}_ex" class="extra-info"><b>Examples:</b><br>• ${v.fullEx}</div>
+        </div><button onclick="deleteVocab('${v.word}')" style="background:none; color:red; font-size:12px; padding:0;">ลบ</button></div></div>`;
+      }).join('')}</div>`;
     document.getElementById('accordionList').appendChild(div);
   }
 
-  // --- Review ---
   function renderReview() {
     const now = Date.now();
     const items = vocabData.filter(v => now >= v.nextReview);
     const container = document.getElementById('reviewContainer');
     container.innerHTML = items.length ? '' : '<p style="text-align:center">🎉 พักผ่อนได้ ทบทวนครบแล้ว!</p>';
-
-    items.forEach(v => {
-      const card = document.createElement('div');
-      card.className = 'quiz-card';
-      card.style.marginBottom = '15px'; card.style.textAlign = 'left';
-      card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <small>📁 ${v.folder || 'ทั่วไป'}</small>
-          <div>${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div>
-        </div>
-        <h3 style="margin:5px 0">${v.word}</h3>
-        <span class="ipa-text" style="margin-bottom:10px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
-        <p id="rev_${v.word.replace(/\s/g,'')}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px;">${v.def}</p>
-        <div style="display:flex; gap:5px; margin-top:15px">
-          <button onclick="document.getElementById('rev_${v.word.replace(/\s/g,'')}').style.display='block'" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
-          <button onclick="markReview('${v.word}', true)" style="background:#68A67D; flex:1">จำได้</button>
-          <button onclick="markReview('${v.word}', false)" style="background:#E57373; flex:1">ลืม</button>
-        </div>
-      `;
+    items.forEach((v, i) => {
+      const uniqueId = `rev_${i}`;
+      const card = document.createElement('div'); card.className = 'quiz-card'; card.style.marginBottom = '15px'; card.style.textAlign = 'left';
+      card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center"><small>📁 ${v.folder || 'ทั่วไป'}</small><div>${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div></div>
+      <h3 style="margin:5px 0">${v.word}</h3>
+      <span class="ipa-text" style="margin-bottom:10px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
+      <p id="rev_ans_${i}" style="display:none; color:#587C9E; font-weight:bold; border-top:1px solid #eee; padding-top:10px; margin-bottom:5px;">${v.def}</p>
+      <div id="rev_extra_${i}" style="display:none;">
+        ${v.fullDef ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_def')">📖 นิยาม</button>` : ''}
+        ${v.fullEx ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_ex')">Ex. ประโยค</button>` : ''}
+        <div id="${uniqueId}_def" class="extra-info"><b>English Definition:</b><br>${v.fullDef}</div>
+        <div id="${uniqueId}_ex" class="extra-info"><b>Examples:</b><br>• ${v.fullEx}</div>
+      </div>
+      <div style="display:flex; gap:5px; margin-top:15px">
+        <button onclick="document.getElementById('rev_ans_${i}').style.display='block'; document.getElementById('rev_extra_${i}').style.display='block';" style="background:#CBD9E1; color:#333">ดูเฉลย</button>
+        <button onclick="markReview('${v.word}', true)" style="background:#68A67D; flex:1">จำได้</button>
+        <button onclick="markReview('${v.word}', false)" style="background:#E57373; flex:1">ลืม</button>
+      </div>`;
       container.appendChild(card);
     });
   }
 
-  // --- Flashcard ---
   function renderFlash() {
     const filter = document.getElementById('flashFilter').value;
     const pool = filter === 'all' ? vocabData : vocabData.filter(v => v.folder === filter);
     const area = document.getElementById('flashArea');
     if(!pool.length) return area.innerHTML = "ไม่มีศัพท์จ้า";
-
     const v = pool[Math.floor(Math.random()*pool.length)];
-    area.innerHTML = `
-      <div class="flashcard-container">
-        <div class="flashcard" onclick="this.classList.toggle('flipped')">
-          <div class="flashcard-front">
-            <div style="font-size:32px; font-weight:600">${v.word}</div>
-            <div class="ipa-text" style="font-size:16px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="event.stopPropagation(); playAudio('${v.audio}')">🔊</span>` : ''}</div>
-            <div style="margin-top:10px">${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div>
-          </div>
-          <div class="flashcard-back"><div>${v.def}</div></div>
-        </div>
-      </div>
-      <button class="btn-next" onclick="renderFlash()">ถัดไป ➔</button>
-    `;
+    area.innerHTML = `<div class="flashcard-container"><div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-front"><div style="font-size:32px; font-weight:600">${v.word}</div><div class="ipa-text" style="font-size:16px">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="event.stopPropagation(); playAudio('${v.audio}')">🔊</span>` : ''}</div><div style="margin-top:10px">${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div></div><div class="flashcard-back"><div>${v.def}</div></div></div></div><button class="btn-next" onclick="renderFlash()">ถัดไป ➔</button>`;
   }
 
-  // --- UI & Helper Functions (Navigation, Folders, Quiz) ---
   function showPage(id) {
     document.querySelectorAll('section').forEach(s => s.style.display = 'none');
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -353,8 +323,7 @@
   function deleteFolder(name) {
     if(confirm(`ลบโฟลเดอร์ "${name}"?`)) {
       vocabData.forEach(v => { if(v.folder === name) v.folder = ''; });
-      folderList = folderList.filter(f => f !== name);
-      saveAll(); renderFolderManage();
+      folderList = folderList.filter(f => f !== name); saveAll(); renderFolderManage();
     }
   }
 
@@ -362,9 +331,7 @@
     document.getElementById('folderManageList').innerHTML = folderList.map(f => `<div class="card"><span>📁 ${f}</span><button onclick="deleteFolder('${f}')" style="background:red;">ลบ</button></div>`).join('') || '<p>ยังไม่มีโฟลเดอร์</p>';
   }
 
-  function deleteVocab(word) {
-    if(confirm('ลบคำนี้?')) { vocabData = vocabData.filter(v => v.word !== word); saveAll(); renderVocabList(); }
-  }
+  function deleteVocab(word) { if(confirm('ลบคำนี้?')) { vocabData = vocabData.filter(v => v.word !== word); saveAll(); renderVocabList(); } }
 
   function markReview(word, success) {
     const idx = vocabData.findIndex(v => v.word === word);
@@ -374,7 +341,6 @@
     saveAll(); renderReview();
   }
 
-  // Quiz
   function startQuiz(type) {
     const filter = document.getElementById('quizFilter').value;
     const pool = filter === 'all' ? vocabData : vocabData.filter(v => v.folder === filter);
@@ -383,8 +349,7 @@
     if(type === 'choice') {
       const q = pool[Math.floor(Math.random()*pool.length)];
       const choices = [...pool].sort(()=>0.5-Math.random()).slice(0, 4);
-      if(!choices.includes(q)) choices[0] = q;
-      choices.sort(()=>0.5-Math.random());
+      if(!choices.includes(q)) choices[0] = q; choices.sort(()=>0.5-Math.random());
       area.innerHTML = `<h4>"${q.word}" (${q.type})</h4>` + choices.map(c => `<button style="width:100%" onclick="checkAnswer('${c.def}','${q.def}','choice')">${c.def}</button>`).join('');
     } else if(type === 'write') {
       const q = pool[Math.floor(Math.random()*pool.length)];
@@ -428,11 +393,9 @@
     reader.readAsText(file);
   }
 
-  // Rain Effect
   const rainContainer = document.getElementById('rain-container');
   for(let i=0; i<15; i++) {
-    const drop = document.createElement('div');
-    drop.className = 'rain-drop'; drop.style.left = Math.random() * 100 + '%';
+    const drop = document.createElement('div'); drop.className = 'rain-drop'; drop.style.left = Math.random() * 100 + '%';
     drop.style.animationDuration = (Math.random() * 1 + 1) + 's'; rainContainer.appendChild(drop);
   }
 
@@ -442,3 +405,4 @@
 </script>
 </body>
 </html>
+
