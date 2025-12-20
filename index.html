@@ -32,7 +32,6 @@
     h2 { color: var(--button); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 30px; display: flex; align-items: center; justify-content: space-between; }
     h2:first-of-type { margin-top: 0; }
 
-    /* --- Modal Style --- */
     .help-btn { 
       cursor: pointer; font-size: 18px; color: #fff; background: var(--button); 
       width: 26px; height: 26px; border-radius: 50%; display: inline-flex; 
@@ -63,7 +62,6 @@
     .code-tip { display: block; background: white; padding: 5px 10px; border-radius: 6px; margin-top: 5px; font-family: monospace; font-size: 13px; border: 1px dashed var(--border-color); }
     .help-footer-btn { width: 100%; margin-top: 10px; padding: 12px; background: var(--button); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
 
-    /* --- โครงสร้างหลักอื่นๆ --- */
     .folder-box { background: var(--accent3); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); }
     textarea, input[type="text"], select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; font-family: inherit; font-size: 16px; }
     
@@ -99,6 +97,30 @@
     .flashcard-back { background: linear-gradient(135deg, var(--button) 0%, #587C9E 100%); color: white; transform: rotateY(180deg); font-size: 22px; }
     .btn-next { background: white; color: var(--button); border: 2px solid var(--button); font-weight: 600; padding: 10px 25px; border-radius: 50px; margin-top: 10px; }
     #db-status { position: fixed; bottom: 10px; right: 10px; font-size: 10px; background: rgba(255,255,255,0.9); padding: 3px 10px; border-radius: 20px; border: 1px solid #ddd; z-index: 1000; font-weight: bold; }
+
+    /* ปรับปรุง Manage Bar ให้ปุ่มเป็นสีทึบและดูพรีเมียมขึ้น */
+    .manage-bar {
+      display: none; position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+      background: #2C3E50; color: white; 
+      padding: 10px 18px; border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.4); z-index: 2000; 
+      justify-content: space-between; align-items: center; gap: 15px; 
+      animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 1px solid rgba(255,255,255,0.15); width: auto; min-width: 300px;
+    }
+    @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 25px; opacity: 1; } }
+    
+    /* ปุ่มในแถบจัดการแบบสีทึบ */
+    .btn-manage-action {
+      background: #4A6572; border: none;
+      color: white; font-size: 12px; padding: 6px 12px; border-radius: 10px;
+      cursor: pointer; transition: 0.2s; font-weight: 500; margin: 0;
+    }
+    .btn-manage-action:hover { background: #5D7A88; transform: translateY(-1px); }
+
+    .vocab-checkbox { display: none; width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: var(--delete-color); }
+    .btn-manage-mode { background: var(--accent); color: var(--text); font-size: 12px; padding: 5px 12px; border: 1px solid var(--border-color); }
+    .btn-manage-mode.active { background: var(--delete-color); color: white; }
   </style>
 </head>
 <body>
@@ -179,7 +201,30 @@
   <div id="reviewContainer"></div>
 </section>
 
-<section id="list"><h2>📚 คลังคำศัพท์</h2><input type="text" id="searchBox" placeholder="🔍 ค้นหาศัพท์..." oninput="renderVocabList()"><div id="accordionList"></div></section>
+<section id="list">
+  <h2 style="display: flex; justify-content: space-between; align-items: center;">
+    <span>📘 คลังคำศัพท์</span>
+    <button id="manageBtn" class="btn-manage-mode" onclick="toggleManageMode()">⚙️ จัดการ</button>
+  </h2>
+  <input type="text" id="searchBox" placeholder="🔍 ค้นหาศัพท์..." oninput="renderVocabList()">
+  <div id="accordionList"></div>
+  
+  <div id="manageBar" class="manage-bar">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 12px;">
+        <div id="selectedCount" style="font-weight: 600; font-size: 15px; line-height: 1;">0</div>
+        <div style="font-size: 9px; opacity: 0.8; margin-top: 2px;">รายการ</div>
+      </div>
+      <button id="selectAllBtn" class="btn-manage-action" onclick="selectAll()">เลือกทั้งหมด</button>
+    </div>
+    
+    <div style="display: flex; gap: 8px;">
+      <button onclick="deleteSelected()" style="background: var(--delete-color); border-radius: 10px; padding: 7px 15px; font-size: 13px; font-weight: 600; margin:0; border:none; color:white; cursor:pointer;">🗑️ ลบ</button>
+      <button class="btn-manage-action" onclick="toggleManageMode()" style="background: #546E7A;">ยกเลิก</button>
+    </div>
+  </div>
+</section>
+
 <section id="quiz"><h2>📝 แบบฝึกหัด</h2><div class="folder-box"><label>โฟลเดอร์ที่จะทดสอบ :</label><select id="quizFilter" onchange="startQuiz('choice')"></select></div><div style="display:flex; justify-content:center; gap:5px; margin-bottom:15px; flex-wrap:wrap;"><button onclick="startQuiz('choice')">เลือกตอบ</button><button onclick="startQuiz('write')">เขียนตอบ</button><button onclick="startQuiz('tf')">True/False</button><button onclick="startQuiz('match')">จับคู่</button></div><div id="quizArea" class="quiz-card"></div></section>
 <section id="flashcard"><h2 style="display:flex; justify-content:space-between; align-items:center;"><span>🗂️ แฟลชการ์ด</span><select id="flashFilter" onchange="renderFlash()" style="width:auto; margin:0; font-size:14px;"></select></h2><div id="flashArea" style="min-height:300px; display:flex; flex-direction:column; align-items:center; justify-content:center;"></div></section>
 
@@ -191,8 +236,8 @@
   let vocabData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
+  let isManageMode = false;
 
-  // --- ฟังก์ชัน Help Modal ---
   function toggleHelp(show, type = 'general') {
     const modal = document.getElementById('helpModal');
     const body = document.getElementById('modalBody');
@@ -235,34 +280,17 @@
     modal.style.display = 'flex';
   }
 
-  // --- ฟังก์ชันใหม่: แก้ไขชื่อโฟลเดอร์ ---
   function editFolderName(oldName) {
     const newName = prompt(`เปลี่ยนชื่อโฟลเดอร์ "${oldName}" เป็น:`, oldName);
     if (newName === null || newName.trim() === "" || newName === oldName) return;
-
     const trimmedNewName = newName.trim();
-    if (folderList.includes(trimmedNewName)) {
-      alert("มีชื่อโฟลเดอร์นี้อยู่แล้วจ้า");
-      return;
-    }
-
-    // 1. อัปเดตใน folderList
+    if (folderList.includes(trimmedNewName)) { alert("มีชื่อโฟลเดอร์นี้อยู่แล้วจ้า"); return; }
     const folderIndex = folderList.indexOf(oldName);
-    if (folderIndex !== -1) {
-      folderList[folderIndex] = trimmedNewName;
-    }
-
-    // 2. อัปเดตศัพท์ทุกคำใน vocabData ที่เคยอยู่โฟลเดอร์เดิม
-    vocabData.forEach(v => {
-      if (v.folder === oldName) v.folder = trimmedNewName;
-    });
-
-    saveAll();
-    renderFolderManage();
-    alert("เปลี่ยนชื่อโฟลเดอร์เรียบร้อยแล้ว ✨");
+    if (folderIndex !== -1) { folderList[folderIndex] = trimmedNewName; }
+    vocabData.forEach(v => { if (v.folder === oldName) v.folder = trimmedNewName; });
+    saveAll(); renderFolderManage(); alert("เปลี่ยนชื่อโฟลเดอร์เรียบร้อยแล้ว ✨");
   }
 
-  // --- ฟังก์ชันเดิมทั้งหมดที่เหลือ ---
   async function initMasterDB() {
     const status = document.getElementById('db-status');
     let loadedCount = 0;
@@ -321,6 +349,60 @@
 
   function toggleExtra(id) { const el = document.getElementById(id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
 
+  function toggleManageMode() {
+    isManageMode = !isManageMode;
+    const btn = document.getElementById('manageBtn');
+    const bar = document.getElementById('manageBar');
+    btn.classList.toggle('active', isManageMode);
+    btn.innerText = isManageMode ? 'ยกเลิก' : '⚙️ จัดการ';
+    bar.style.display = isManageMode ? 'flex' : 'none';
+    if (!isManageMode) clearSelection();
+    renderVocabList();
+    updateSelectedCount();
+  }
+
+  // ฟังก์ชันล้างค่าการเลือกเมื่อปิดโหมด
+  function clearSelection() {
+    const checkboxes = document.querySelectorAll('.vocab-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const btn = document.getElementById('selectAllBtn');
+    if(btn) btn.innerText = 'เลือกทั้งหมด';
+  }
+
+  // ปรับปรุงฟังก์ชันเลือกทั้งหมดให้สลับสถานะได้จริง
+  function selectAll() {
+    const checkboxes = document.querySelectorAll('.vocab-checkbox');
+    const btn = document.getElementById('selectAllBtn');
+    
+    // ตรวจสอบว่าตอนนี้เลือกครบหรือยัง (เฉพาะที่มองเห็น)
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => cb.offsetParent !== null);
+    const allChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+    
+    const targetState = !allChecked;
+    visibleCheckboxes.forEach(cb => cb.checked = targetState);
+    
+    btn.innerText = targetState ? 'ยกเลิกการเลือก' : 'เลือกทั้งหมด';
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const checked = document.querySelectorAll('.vocab-checkbox:checked').length;
+    const countEl = document.getElementById('selectedCount');
+    if(countEl) countEl.innerText = checked;
+  }
+
+  function deleteSelected() {
+    const checkedBoxes = document.querySelectorAll('.vocab-checkbox:checked');
+    if (checkedBoxes.length === 0) return alert("กรุณาเลือกคำศัพท์ที่ต้องการลบ");
+    if (confirm(`ยืนยันการลบคำศัพท์ที่เลือกทั้งหมด ${checkedBoxes.length} คำ?`)) {
+      const wordsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+      vocabData = vocabData.filter(v => !wordsToDelete.includes(v.word));
+      saveAll();
+      toggleManageMode();
+      alert("ลบสำเร็จแล้ว ✨");
+    }
+  }
+
   function renderVocabList() {
     const query = document.getElementById('searchBox').value.toLowerCase();
     const container = document.getElementById('accordionList');
@@ -338,14 +420,16 @@
     div.innerHTML = `<div class="folder-header" onclick="this.nextElementSibling.classList.toggle('active')"><span>📁 ${title} (${items.length})</span><span>▼</span></div><div class="folder-content">
       ${items.map((v, i) => {
         const uniqueId = `list_${title.replace(/\s/g,'')}_${i}`;
-        return `<div class="card" style="display:block;"><div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1">
+        return `<div class="card" style="display:flex; align-items:center;">
+          <input type="checkbox" class="vocab-checkbox" value="${v.word}" style="display: ${isManageMode ? 'block' : 'none'}" onchange="updateSelectedCount()">
+          <div style="flex:1"><div style="display:flex; justify-content:space-between; align-items:start;"><div style="flex:1">
           <div><b>${v.word}</b> ${v.type ? `<span class="type-tag">${v.type}</span>` : ''} ${v.level ? `<span class="cefr-badge">${v.level}</span>` : ''}</div>
           <span class="ipa-text">${v.ipa || ''} ${v.audio ? `<span class="audio-btn" onclick="playAudio('${v.audio}')">🔊</span>` : ''}</span>
           <div style="margin:5px 0; color:#555;">${v.def}</div>
           <div>${v.fullDef ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_def')">📖 นิยาม</button>` : ''}${v.fullEx ? `<button class="btn-extra" onclick="toggleExtra('${uniqueId}_ex')">Ex. ประโยค</button>` : ''}</div>
           <div id="${uniqueId}_def" class="extra-info"><b>English Definition:</b><br>${v.fullDef}</div>
           <div id="${uniqueId}_ex" class="extra-info"><b>Examples:</b><br>• ${v.fullEx}</div>
-        </div><button onclick="deleteVocab('${v.word}')" style="background:none; color:red; font-size:12px; padding:0;">ลบ</button></div></div>`;
+        </div>${!isManageMode ? `<button onclick="deleteVocab('${v.word}')" style="background:none; color:red; font-size:12px; padding:0;">ลบ</button>` : ''}</div></div></div>`;
       }).join('')}</div>`;
     document.getElementById('accordionList').appendChild(div);
   }
@@ -384,7 +468,7 @@
     const btn = Array.from(document.querySelectorAll('nav button')).find(b => b.getAttribute('onclick').includes(id));
     if(btn) btn.classList.add('active');
     if(id === 'folders') renderFolderManage();
-    if(id === 'list') renderVocabList();
+    if(id === 'list') { if(isManageMode) toggleManageMode(); renderVocabList(); }
     if(id === 'review') renderReview();
     if(id === 'flashcard') renderFlash();
     if(id === 'quiz') startQuiz('choice');
