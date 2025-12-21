@@ -489,7 +489,7 @@
   }
 
   function deleteFolder(name) {
-    if(confirm(`🚨 คำเตือน: การลบโฟลเดอร์ "${name}" จะทำให้คำศัพท์ทั้งหมดที่อยู่ในโฟลเดอร์นี้ถูกลบหายไปด้วย ยืนยันการลบ?`)) {
+    if(confirm(`🚨 คำเตือน : การลบโฟลเดอร์ "${name}" จะทำให้คำศัพท์ทั้งหมดที่อยู่ในโฟลเดอร์นี้ถูกลบหายไปด้วย`)) {
       vocabData = vocabData.filter(v => v.folder !== name);
       folderList = folderList.filter(f => f !== name); saveAll(); renderFolderManage();
     }
