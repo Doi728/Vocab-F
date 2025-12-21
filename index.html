@@ -149,6 +149,26 @@
       margin: 0;
       width: 100%;
     }
+
+    /* Quiz Result Pop-up */
+    .quiz-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; align-items: center;
+      justify-content: center; z-index: 3000; backdrop-filter: blur(5px);
+    }
+    .quiz-result-card {
+      background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 400px;
+      text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .result-icon { font-size: 60px; margin-bottom: 15px; display: block; }
+    .result-title { font-size: 24px; font-weight: 600; margin-bottom: 10px; }
+    .result-detail { font-size: 18px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+    .result-detail b { color: var(--success-color); font-size: 22px; }
+    .btn-next-quiz { 
+      width: 100%; padding: 15px; border-radius: 12px; border: none; 
+      background: var(--button); color: white; font-weight: 600; font-size: 16px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -170,6 +190,15 @@
     <h2 style="margin-top: 0; color: var(--success-color);">นำเข้าไฟล์สำเร็จ!</h2>
     <div id="importResultBody" style="margin: 20px 0; font-size: 18px; color: var(--text);"></div>
     <button class="help-footer-btn" onclick="location.reload()" style="background: var(--button); padding: 15px; font-size: 16px;">รีโหลดหน้าเพื่ออัปเดต</button>
+  </div>
+</div>
+
+<div id="quizResultModal" class="quiz-overlay">
+  <div class="quiz-result-card" onclick="event.stopPropagation()">
+    <span id="resIcon" class="result-icon"></span>
+    <div id="resTitle" class="result-title"></div>
+    <div id="resDetail" class="result-detail"></div>
+    <button class="btn-next-quiz" id="btnNextQuiz">ลุยต่อเลย! ➔</button>
   </div>
 </div>
 
@@ -288,6 +317,7 @@
   let folderList = JSON.parse(localStorage.getItem(FOLDER_KEY) || '[]');
   let masterDB = {}; 
   let isManageMode = false;
+  let currentQuizType = 'choice'; // เพิ่มตัวแปรเก็บประเภท Quiz ปัจจุบัน
 
   function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
@@ -315,7 +345,7 @@
       content = `<div class="help-item"><p>เนื่องจากข้อมูลเก็บอยู่ในเครื่องนี้เท่านั้น <span style="color:red; font-weight:bold;">ไม่สามารถซิงค์ข้อมูลต่างอุปกรณ์ได้</span> จึงมีระบบ <span style="color:green; font-weight:bold;">ซิงค์อัตโนมือ</span> โดยการกด <b>"ส่งออกไฟล์"</b> เป็นไฟล์ <b>.json</b> และส่งไป <b>"นำเข้าไฟล์"</b> ในอุปกรณ์ที่ต้องการซิงค์หรือแชร์คำศัพท์กับเพื่อน</p></div>`;
     } else {
       title.innerHTML = '📂 การจัดการโฟลเดอร์';
-      content = `<div class="help-item"><p>• <b>แก้ไข :</b> เปลี่ยนชื่อโฟลเดอร์และอัปเดตคำศัพท์ข้างในตามชื่อใหม่<br>• <b>ลบ :</b> <span style="color:red; font-weight:bold;">ลบโฟลเดอร์และคำศัพท์ทั้งหมดที่อยู่ข้างในทิ้งทันที</span></p></div>`;
+      content = `<div class="help-item"><p>• <b>แก้ไข :</b> เปลี่ยนชื่อโฟลเดอร์และอัปเดตคำศัพท์ข้างในตามชื่อใหม่<br>• <b>ลบ :</b> <span style="color:red; font-weight:bold;">ลบโฟลเดอร์และคำศัพท์ทั้งหมดที่อยู่ข้างในทที</span></p></div>`;
     }
     body.innerHTML = content;
     modal.style.display = 'flex';
@@ -512,6 +542,7 @@
   }
 
   function startQuiz(type) {
+    currentQuizType = type; // เก็บค่าประเภทที่เลือกไว้
     const filter = document.getElementById('quizFilter').value;
     const pool = filter === 'all' ? vocabData : vocabData.filter(v => v.folder === filter);
     const area = document.getElementById('quizArea');
@@ -523,7 +554,7 @@
       area.innerHTML = `<h4>"${q.word}" (${q.type})</h4>` + choices.map(c => `<button style="width:100%" onclick="checkAnswer('${c.def}','${q.def}','choice')">${c.def}</button>`).join('');
     } else if(type === 'write') {
       const q = pool[Math.floor(Math.random()*pool.length)];
-      area.innerHTML = `<h4>ภาษาอังกฤษของ : ${q.def}</h4><input type="text" id="ansInp"><button onclick="checkWrite('${q.word.toLowerCase()}')">ส่ง</button>`;
+      area.innerHTML = `<h4>ภาษาอังกฤษของ : ${q.def}</h4><input type="text" id="ansInp" onkeyup="if(event.key==='Enter') checkWrite('${q.word.toLowerCase()}')"><button onclick="checkWrite('${q.word.toLowerCase()}')">ส่ง</button>`;
     } else if(type === 'tf') {
       const q1 = pool[Math.floor(Math.random()*pool.length)]; const q2 = Math.random() > 0.5 ? q1 : pool[Math.floor(Math.random()*pool.length)];
       area.innerHTML = `<h4>${q1.word} = ${q2.def}</h4><button onclick="checkAnswer(${q1===q2},true,'tf')">True</button><button onclick="checkAnswer(${q1===q2},false,'tf')">False</button>`;
@@ -535,15 +566,65 @@
     }
   }
 
-  function checkAnswer(s, a, t) { if(s == a) showToast("ถูกต้อง! ✨"); else showToast("ผิดจ้าหนู", "error"); startQuiz(t); }
-  function checkWrite(c) { const u = document.getElementById('ansInp').value.toLowerCase().trim(); checkAnswer(u, c, 'write'); }
+  // ปรับฟังก์ชันปิด Pop-up ผลลัพธ์ Quiz
+  function closeQuizResult() {
+    document.getElementById('quizResultModal').style.display = 'none';
+    startQuiz(currentQuizType);
+  }
+
+  function checkAnswer(s, a, t) {
+    const modal = document.getElementById('quizResultModal');
+    const icon = document.getElementById('resIcon');
+    const title = document.getElementById('resTitle');
+    const detail = document.getElementById('resDetail');
+    const btn = document.getElementById('btnNextQuiz');
+
+    const isCorrect = (s == a);
+
+    if (isCorrect) {
+      icon.innerText = "✅";
+      title.innerText = "ถูกต้องที่สุด!";
+      title.style.color = "var(--success-color)";
+      detail.innerHTML = `เก่งมาก! คำนี้แปลว่า<br><b>"${a}"</b>`;
+    } else {
+      icon.innerText = "❌";
+      title.innerText = "ผิดนิดเดียว!";
+      title.style.color = "var(--delete-color)";
+      detail.innerHTML = `คำตอบที่ถูกต้องคือ<br><b>"${a}"</b>`;
+    }
+
+    modal.style.display = 'flex';
+    // ตั้งค่าให้แตะที่ว่างเพื่อปิดได้
+    modal.onclick = closeQuizResult; 
+    btn.onclick = (e) => { e.stopPropagation(); closeQuizResult(); };
+  }
+
+  function checkWrite(c) {
+    const u = document.getElementById('ansInp').value.toLowerCase().trim();
+    checkAnswer(u, c, 'write');
+  }
+
   let matchFirst = null;
   function handleMatch(el, pair) {
     if(el.classList.contains('matched') || el.classList.contains('selected')) return;
     el.classList.add('selected');
     if(!matchFirst) { matchFirst = {el, pair}; } 
     else {
-      if(matchFirst.pair === pair && matchFirst.el !== el) { el.classList.add('matched'); matchFirst.el.classList.add('matched'); showToast("จับคู่สำเร็จ!"); }
+      if(matchFirst.pair === pair && matchFirst.el !== el) { 
+        el.classList.add('matched'); 
+        matchFirst.el.classList.add('matched'); 
+        showToast("จับคู่สำเร็จ!"); 
+        
+        const totalItems = document.querySelectorAll('.match-item').length;
+        const matchedItems = document.querySelectorAll('.match-item.matched').length;
+        if(totalItems === matchedItems) {
+           setTimeout(() => {
+             checkAnswer(true, true, 'match');
+           }, 500);
+        }
+      } else {
+        showToast("ยังไม่ใช่คู่ของมันนะ", "error");
+      }
       setTimeout(() => { document.querySelectorAll('.match-item').forEach(m => m.classList.remove('selected')); matchFirst = null; }, 400);
     }
   }
@@ -561,10 +642,7 @@
       try {
         const data = JSON.parse(e.target.result);
         if (data.vocab && data.folders) {
-          // Smart Merge Folders
           data.folders.forEach(newF => { if (!folderList.includes(newF)) folderList.push(newF); });
-
-          // Smart Merge Vocab
           let added = 0; let updated = 0;
           data.vocab.forEach(newV => {
             const existingIdx = vocabData.findIndex(v => v.word.toLowerCase() === newV.word.toLowerCase());
@@ -578,15 +656,12 @@
             }
           });
           saveAll();
-          
-          // เปลี่ยนจากการโชว์ Toast เป็น Pop-up กลางจอ
           document.getElementById('importResultBody').innerHTML = `
             <p>เพิ่มคำศัพท์ใหม่ : <b>${added}</b> คำ</p>
             <p>อัปเดตคำศัพท์เดิม : <b>${updated}</b> คำ</p>
             <p style="font-size: 14px; color: #888; margin-top: 10px;">รวมทั้งหมดที่นำเข้า : ${added + updated} คำ</p>
           `;
           document.getElementById('importModal').style.display = 'flex';
-          
         }
       } catch(e) { showToast("ไฟล์ไม่ถูกต้อง", "error"); }
     };
@@ -602,4 +677,4 @@
   initMasterDB(); updateDropdowns(); showPage('add');
 </script>
 </body>
-  </html> 
+</html>
